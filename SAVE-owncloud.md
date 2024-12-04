@@ -1,28 +1,32 @@
 
 ````
 #!/bin/bash
+apt install zip
+# Chemins et configurations
+SOURCE_DIR="/var/lib/docker/volumes/030ba89a9b5c607c7a87069aa0307a0b8819521ee5b469338eaee4129dd3e74f/_data/toip/"
+BACKUP_DIR="/backup_owncloud"
+DATE=$(date +"%d-%m-%Y_%H:%M:%S")
+BACKUP_FILE="$BACKUP_DIR/sio2-$DATE.zip"
 
-# Variables
-BASE_DIR="/var/lib/docker/volumes/030ba89a9b5c607c7a87069aa0307a0b8819521ee5b469338eaee4129dd3e74f/_data"
-TOIP_DIR="$BASE_DIR/toip"
-ARCHIVE_DIR="$BASE_DIR/archive"
-DATE=$(date '+%d-%m-%Y_%H:%M:%S')
-FTP_SERVER="adresse_du_serveur_ftp"
-FTP_USER="votre_utilisateur_ftp"
-FTP_PASS="votre_mot_de_passe"
-FTP_DIR="/path/to/archives_toip"
+# Vérifier que le répertoire source existe
+if [ ! -d "$SOURCE_DIR" ]; then
+    echo "Erreur : le répertoire source $SOURCE_DIR n'existe pas."
+    exit 1
+fi
 
-# Création des répertoires si nécessaires
-mkdir -p $TOIP_DIR
-mkdir -p $ARCHIVE_DIR
+# Créer le répertoire de sauvegarde s'il n'existe pas
+mkdir -p "$BACKUP_DIR"
 
-# Sauvegarde locale du fichier CSV
-cp $TOIP_DIR/data.csv $ARCHIVE_DIR/sio2-$DATE.csv
+# Compresser le contenu du répertoire source dans un fichier ZIP
+zip -r "$BACKUP_FILE" "$SOURCE_DIR" > /dev/null 2>&1
 
-# Compression du répertoire toip
-zip -r $ARCHIVE_DIR/sio2-$DATE.zip $TOIP_DIR
+# Vérifier si la compression a réussi
+if [ $? -eq 0 ]; then
+    echo "Sauvegarde réussie : $BACKUP_FILE"
+else
+    echo "Erreur lors de la création de la sauvegarde."
+    exit 1
+fi
 
-# Transfert du fichier ZIP sur le serveur FTP
-curl -T $ARCHIVE_DIR/sio2-$DATE.zip ftp://$FTP_USER:$FTP_PASS@$FTP_SERVER$FTP_DIR/
 
 ````
